@@ -28,7 +28,13 @@ func BuildModel(model Model, path string) error {
 
 	fileName := extractFileNameFromModel(model.Name)
 	templateName := extractFileNameFromPath(templatePath)
-	tmpl, err := template.New(templateName).Funcs(functionMap).ParseFiles(templatePath)
+	content, err := getTemplateContent("./model.tmpl")
+	if err != nil {
+		return err
+	}
+	tmpl, err := template.New(templateName).Funcs(functionMap).Parse(content)
+
+	// tmpl, err := template.New(templateName).Funcs(functionMap).ParseFiles(templatePath)
 	if err != nil {
 		return err
 	}
