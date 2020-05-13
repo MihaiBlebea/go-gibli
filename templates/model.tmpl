@@ -1,0 +1,141 @@
+package model
+
+import (
+    "database/sql"
+    "time"
+
+    // mysql driver
+    _ "github.com/go-sql-driver/mysql"
+)
+
+// Code generated .* DO NOT EDIT\.$
+
+{{ $modelName := toModelName .Name }}
+{{ $variableName := toVariableName .Name }}
+{{ $tableName := .Table -}}
+
+// {{ $modelName }} is a model
+type {{ $modelName }} struct {
+    ID int `json:"id"`
+    {{- range $field := .Fields }}
+    {{ toModelName $field.Name }} {{ toBasicType $field.Kind }} `json:"{{ $field.Name -}}"`
+    {{- end }}
+    Created time.Time `json:"created"`
+    Updated time.Time `json:"updated"`
+    Deleted bool      `json:"deleted"`
+}
+
+// {{ $modelName }}Repository is a repository
+type {{ $modelName }}Repository struct {
+}
+
+// Add adds a {{ $modelName }} model to the db
+func (r *{{ $modelName }}Repository) Add(client *sql.DB, {{ $variableName }} *{{ $modelName }}) (int, error) {
+	defer client.Close()
+
+	stmt, err := client.Prepare("INSERT INTO {{ $tableName }} ({{ range $field := .Fields }}{{ $field.Name }}, {{ end -}}deleted) VALUES ({{ range $field := .Fields }}?, {{ end -}}?)")
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := stmt.Exec( 
+		{{- range $field := .Fields }}
+		{{ $variableName }}.{{ toModelName $field.Name -}},
+		{{- end }} 
+		{{ $variableName }}.Deleted,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return int(id), nil
+}
+
+// Update CRUD operation for {{ $modelName }}
+func (r *{{ $modelName }}Repository) Update(client *sql.DB, {{ $variableName }} *{{ $modelName }}) (int, error) {
+	defer client.Close()
+
+	stmt, err := client.Prepare("UPDATE {{ $tableName }} SET {{ range $field := .Fields }}{{ $field.Name }}=?, {{ end -}}deleted=? WHERE id=?")
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := stmt.Exec(
+		{{- range $field := .Fields }}
+		{{ $variableName }}.{{ toModelName $field.Name -}},
+		{{- end }}
+		{{ $variableName }}.Deleted,
+		{{ $variableName }}.ID,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return int(id), nil
+}
+
+// FindByID method
+func (r *{{ $modelName }}Repository) FindByID(client *sql.DB, id int) ([]{{ $modelName }}, int, error) {
+	{{ $variableName }}s, count, err := r.findBy(client, "SELECT * FROM {{ $tableName }} WHERE id = ? AND deleted=0", id)
+	if err != nil {
+		return []{{ $modelName }}{}, 0, err
+	}
+	if count == 0 {
+		return []{{ $modelName }}{}, 0, nil
+	}
+	return {{ $variableName }}s, len({{ $variableName }}s), nil
+}
+
+{{- range $field := .Fields }}
+{{ if $field.Searchable }}
+// FindBy{{ toModelName $field.Name }} method
+func (r *{{ $modelName }}Repository) FindBy{{ toModelName $field.Name }}(client *sql.DB, {{ toVariableName $field.Name }} {{ toBasicType $field.Kind }}) ([]{{ $modelName }}, int, error) {
+	{{ $variableName }}s, count, err := r.findBy(client, "SELECT * FROM {{ $tableName }} WHERE {{ $field.Name }} = ? AND deleted=0", {{ toVariableName $field.Name }})
+	if err != nil {
+		return []{{ $modelName }}{}, 0, err
+	}
+	if count == 0 {
+		return []{{ $modelName }}{}, 0, nil
+	}
+	return {{ $variableName }}s, len({{ $variableName }}s), nil
+}
+{{ end -}}
+{{ end -}}
+
+func (r *{{ $modelName }}Repository) findBy(client *sql.DB , query string, params ...interface{}) ([]{{ $modelName }}, int, error) {
+	defer client.Close()
+
+	rows, err := client.Query(query, params...)
+	if err != nil {
+		return []{{ $modelName }}{}, 0, err
+	}
+
+	var {{ $variableName }}s []{{ $modelName }}
+	for rows.Next() {
+		var {{ $variableName }} {{ $modelName }}
+
+		err = rows.Scan(
+            &{{ $variableName }}.ID, 
+            {{- range $field := .Fields }}
+            &{{ $variableName }}.{{ toModelName $field.Name -}},
+            {{- end }}
+            &{{ $variableName }}.Created, 
+            &{{ $variableName }}.Updated,
+            &{{ $variableName }}.Deleted,
+        )
+		if err != nil {
+			return []{{ $modelName }}{}, 0, err
+		}
+		{{ $variableName }}s = append({{ $variableName }}s, {{ $variableName }})
+	}
+	return {{ $variableName }}s, len({{ $variableName }}s), nil
+}
+

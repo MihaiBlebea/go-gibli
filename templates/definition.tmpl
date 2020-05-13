@@ -1,0 +1,10 @@
+---
+version: {{ .Version }}
+name: {{ .Name }}
+kind: {{ .Kind }}
+fields:
+    - name: username
+      kind: string
+      length: 100
+      default: john.doe
+      searchable: false
