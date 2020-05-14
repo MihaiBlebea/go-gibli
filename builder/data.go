@@ -10,6 +10,7 @@ import (
 type Model struct {
 	Version   string    `yaml:"version"`
 	Timestamp time.Time `yaml:"timestamp"`
+	Module    string    `yaml:"module"`
 	Name      string    `yaml:"name"`
 	Kind      string    `yaml:"kind"`
 	Table     string    `yaml:"table"`
@@ -60,6 +61,7 @@ func (m *Model) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var model struct {
 		Version   string    `yaml:"version"`
 		Timestamp time.Time `yaml:"timestamp"`
+		Module    string    `yaml:"module"`
 		Name      string    `yaml:"name"`
 		Kind      string    `yaml:"kind"`
 		Table     string    `yaml:"table"`

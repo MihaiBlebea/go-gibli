@@ -11,6 +11,8 @@ import (
 
 // BuildModel receives the data, file to write to and template path and writes the model to a go file
 func BuildModel(model Model, path string) error {
+	fmt.Println(extractModuleNameFromPath(path))
+
 	functionMap := template.FuncMap{
 		"toUpperCase":    strings.Title,
 		"toLowerCase":    strings.ToLower,
@@ -18,8 +20,6 @@ func BuildModel(model Model, path string) error {
 		"toVariableName": toVariableName,
 		"toBasicType":    transformer.ToBasicFieldKind,
 	}
-	// Define the path to the template model
-	templatePath := "./orm/templates/model.tmpl"
 
 	err := checkAndCreate(path)
 	if err != nil {
@@ -27,14 +27,15 @@ func BuildModel(model Model, path string) error {
 	}
 
 	fileName := extractFileNameFromModel(model.Name)
-	templateName := extractFileNameFromPath(templatePath)
-	content, err := getTemplateContent("./model.tmpl")
+
+	templateName := "model.tmpl"
+	content, err := getTemplateContent(fmt.Sprintf("./%s", templateName))
 	if err != nil {
 		return err
 	}
-	tmpl, err := template.New(templateName).Funcs(functionMap).Parse(content)
 
-	// tmpl, err := template.New(templateName).Funcs(functionMap).ParseFiles(templatePath)
+	fmt.Println(content)
+	tmpl, err := template.New(templateName).Funcs(functionMap).Parse(content)
 	if err != nil {
 		return err
 	}
@@ -44,6 +45,8 @@ func BuildModel(model Model, path string) error {
 		return err
 	}
 	defer file.Close()
+
+	model.Module = extractModuleNameFromPath(path)
 
 	err = tmpl.Execute(file, model)
 	if err != nil {
@@ -79,7 +82,11 @@ func toVariableName(name string) string {
 }
 
 // pure function
-func extractFileNameFromPath(path string) string {
+func extractModuleNameFromPath(path string) (moduleName string) {
+	last := path[len(path)-1]
+	if last == '/' {
+		path = path[:last]
+	}
 	parts := strings.Split(path, "/")
 	return parts[len(parts)-1]
 }

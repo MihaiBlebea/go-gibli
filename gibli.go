@@ -1,4 +1,4 @@
-package gibli
+package main
 
 import (
 	"database/sql"
