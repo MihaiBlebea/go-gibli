@@ -7,14 +7,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/MihaiBlebea/go-gibli/bundle"
-
 	"github.com/MihaiBlebea/go-gibli/reader"
 	"github.com/urfave/cli"
 )
 
 func main() {
-	bundle.Bundle()
 	app := &cli.App{}
 	app.Commands = []cli.Command{
 		{
