@@ -6,12 +6,12 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/MihaiBlebea/go-gibli/bundle"
 	"github.com/MihaiBlebea/go-gibli/transformer"
 )
 
 // BuildModel receives the data, file to write to and template path and writes the model to a go file
 func BuildModel(model Model, path string) error {
-	fmt.Println(extractModuleNameFromPath(path))
 
 	functionMap := template.FuncMap{
 		"toUpperCase":    strings.Title,
@@ -29,13 +29,9 @@ func BuildModel(model Model, path string) error {
 	fileName := extractFileNameFromModel(model.Name)
 
 	templateName := "model.tmpl"
-	content, err := getTemplateContent(fmt.Sprintf("./%s", templateName))
-	if err != nil {
-		return err
-	}
+	content := bundle.Get(fmt.Sprintf("templates/%s", templateName))
 
-	fmt.Println(content)
-	tmpl, err := template.New(templateName).Funcs(functionMap).Parse(content)
+	tmpl, err := template.New(templateName).Funcs(functionMap).Parse(string(content))
 	if err != nil {
 		return err
 	}
