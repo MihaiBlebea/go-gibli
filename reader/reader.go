@@ -39,3 +39,17 @@ func ReadModelDefinitions(folderPath string) (model []builder.Model, err error) 
 	}
 	return models, nil
 }
+
+// ReadConfig reads a YAML config file and returns the values as Config struct
+func ReadConfig(path string) (config Config, err error) {
+	b, err := readConfigFile(path)
+	if err != nil {
+		return config, err
+	}
+
+	config, err = extractConfigYaml(b, &config)
+	if err != nil {
+		return config, err
+	}
+	return config, nil
+}
