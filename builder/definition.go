@@ -4,19 +4,22 @@ import (
 	"fmt"
 	"os"
 	"text/template"
+
+	"github.com/MihaiBlebea/go-gibli/bundle"
 )
 
 // BuildDefinition creates a new default yaml definition file
-func BuildDefinition(name, kind, version, folderPath string) error {
-	templatePath := "./orm/templates/definition.tmpl"
-
+func BuildDefinition(name, kind, version, folderPath string) (err error) {
 	type Data struct {
 		Version string
 		Name    string
 		Kind    string
 	}
 
-	tmpl, err := template.New(fmt.Sprintf("%s.yaml", name)).ParseFiles(templatePath)
+	templateName := "definition.tmpl"
+	content := bundle.Get(fmt.Sprintf("templates/%s", templateName))
+
+	tmpl, err := template.New(fmt.Sprintf("%s.yaml", name)).Parse(string(content))
 	if err != nil {
 		return err
 	}

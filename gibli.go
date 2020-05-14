@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/MihaiBlebea/go-gibli/builder"
 	"github.com/MihaiBlebea/go-gibli/migrator"
@@ -13,9 +12,9 @@ import (
 
 // Config contains the details to run the code generator
 type Config struct {
-	ModelDefinitionPath string
-	ModelFilesPath      string
-	Client              Connect
+	DefinitionsPath string
+	ModelsPath      string
+	Client          Connect
 }
 
 // Connect returns a mysql connection object
@@ -23,16 +22,14 @@ type Connect func() *sql.DB
 
 // GenerateModels reads the definition files and builds go models from each
 // Impure function
-func GenerateModels(c Config) error {
-	if c.ModelDefinitionPath == "" {
-		return errors.New("Invalid config ModelDefinitionPath")
-	}
-	if c.ModelFilesPath == "" {
-		return errors.New("Invalid config ModelFilesPath")
+func GenerateModels(c Config) (err error) {
+	err = validateConfig(c)
+	if err != nil {
+		return err
 	}
 
 	// Read the yaml definition files for models
-	models, err := reader.ReadModelDefinitions(c.ModelDefinitionPath)
+	models, err := reader.ReadModelDefinitions(c.DefinitionsPath)
 	if err != nil {
 		return err
 	}
@@ -40,7 +37,7 @@ func GenerateModels(c Config) error {
 	for _, model := range models {
 
 		// Build model go file
-		err = builder.BuildModel(model, c.ModelFilesPath)
+		err = builder.BuildModel(model, c.ModelsPath)
 		if err != nil {
 			return err
 		}
@@ -60,11 +57,23 @@ func GenerateModels(c Config) error {
 			return err
 		}
 
-		fmt.Println(migration)
-
 		if needMigration(migration) {
 			migrator.Migrate(c.Client(), migration)
 		}
+	}
+	return nil
+}
+
+// GenerateDefinitionFile generates a YAML definition file
+func GenerateDefinitionFile(c Config, name, kind string) (err error) {
+	err = validateConfig(c)
+	if err != nil {
+		return err
+	}
+
+	err = builder.BuildDefinition(name, kind, "1", c.DefinitionsPath)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -74,4 +83,14 @@ func needMigration(migration builder.Migration) bool {
 		return true
 	}
 	return false
+}
+
+func validateConfig(c Config) error {
+	if c.ModelsPath == "" {
+		return errors.New("Invalid config ModelsPath")
+	}
+	if c.DefinitionsPath == "" {
+		return errors.New("Invalid config DefinitionsPath")
+	}
+	return nil
 }
